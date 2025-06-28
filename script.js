@@ -17,38 +17,23 @@ AOS.init({
     offset: 100
 });
 
-// Enhanced Navbar Scroll Effect with throttling for better performance
-let scrollTimeout;
+// Navbar Scroll Effect
 window.addEventListener('scroll', function() {
-    if (scrollTimeout) {
-        return;
+    const navbar = document.getElementById('navbar');
+    if (window.scrollY > 50) {
+        navbar.classList.add('scrolled');
+    } else {
+        navbar.classList.remove('scrolled');
     }
+});
 
-    scrollTimeout = setTimeout(() => {
-        const navbar = document.getElementById('navbar');
-        if (window.scrollY > 50) {
-            navbar.classList.add('scrolled');
-        } else {
-            navbar.classList.remove('scrolled');
-        }
-        scrollTimeout = null;
-    }, 10);
-}, { passive: true });
-
-// Enhanced Mobile Menu Toggle
+// Mobile Menu Toggle
 const hamburger = document.getElementById('hamburger');
 const navMenu = document.getElementById('nav-menu');
 
 hamburger.addEventListener('click', function() {
     navMenu.classList.toggle('active');
     hamburger.classList.toggle('active');
-
-    // Prevent body scroll when menu is open
-    if (navMenu.classList.contains('active')) {
-        document.body.style.overflow = 'hidden';
-    } else {
-        document.body.style.overflow = 'auto';
-    }
 });
 
 // Close mobile menu when clicking on a link
@@ -56,17 +41,7 @@ document.querySelectorAll('.nav-link').forEach(link => {
     link.addEventListener('click', () => {
         navMenu.classList.remove('active');
         hamburger.classList.remove('active');
-        document.body.style.overflow = 'auto';
     });
-});
-
-// Close mobile menu when clicking outside
-document.addEventListener('click', function(e) {
-    if (!hamburger.contains(e.target) && !navMenu.contains(e.target)) {
-        navMenu.classList.remove('active');
-        hamburger.classList.remove('active');
-        document.body.style.overflow = 'auto';
-    }
 });
 
 // Smooth Scrolling for Navigation Links
@@ -387,17 +362,7 @@ function renderLogoLetters(lang = 'ar') {
     });
 }
 
-// Mobile Detection and Optimizations
-function isMobile() {
-    return /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent) ||
-           window.innerWidth <= 768;
-}
-
-function isTouchDevice() {
-    return 'ontouchstart' in window || navigator.maxTouchPoints > 0;
-}
-
-// Load saved language and apply mobile optimizations
+// Load saved language
 window.addEventListener('load', function() {
     const savedLang = localStorage.getItem('preferred-language');
     if (savedLang && savedLang !== currentLanguage) {
@@ -406,25 +371,6 @@ window.addEventListener('load', function() {
         updateLangButton();
     }
     renderLogoLetters(currentLanguage);
-
-    // Apply mobile-specific optimizations
-    if (isMobile()) {
-        document.body.classList.add('mobile-device');
-
-        // Reduce animations on mobile for better performance
-        const style = document.createElement('style');
-        style.textContent = `
-            .mobile-device * {
-                animation-duration: 0.3s !important;
-                transition-duration: 0.3s !important;
-            }
-        `;
-        document.head.appendChild(style);
-    }
-
-    if (isTouchDevice()) {
-        document.body.classList.add('touch-device');
-    }
 });
 
 // Custom Video Player Modal
@@ -751,15 +697,10 @@ function initCustomVideoPlayer(modal) {
         togglePlayPause();
     });
 
-    // Progress bar interaction (Mouse and Touch)
+    // Progress bar interaction
     progressBar.addEventListener('mousedown', (e) => {
         isDragging = true;
         updateProgressFromMouse(e);
-    });
-
-    progressBar.addEventListener('touchstart', (e) => {
-        isDragging = true;
-        updateProgressFromTouch(e);
     });
 
     document.addEventListener('mousemove', (e) => {
@@ -768,34 +709,13 @@ function initCustomVideoPlayer(modal) {
         }
     });
 
-    document.addEventListener('touchmove', (e) => {
-        if (isDragging) {
-            e.preventDefault();
-            updateProgressFromTouch(e);
-        }
-    });
-
     document.addEventListener('mouseup', () => {
-        isDragging = false;
-    });
-
-    document.addEventListener('touchend', () => {
         isDragging = false;
     });
 
     function updateProgressFromMouse(e) {
         const rect = progressBar.getBoundingClientRect();
         const progress = Math.max(0, Math.min(1, (e.clientX - rect.left) / rect.width));
-        const newTime = progress * video.duration;
-        video.currentTime = newTime;
-        progressFilled.style.width = `${progress * 100}%`;
-        progressHandle.style.left = `${progress * 100}%`;
-    }
-
-    function updateProgressFromTouch(e) {
-        const rect = progressBar.getBoundingClientRect();
-        const touch = e.touches[0] || e.changedTouches[0];
-        const progress = Math.max(0, Math.min(1, (touch.clientX - rect.left) / rect.width));
         const newTime = progress * video.duration;
         video.currentTime = newTime;
         progressFilled.style.width = `${progress * 100}%`;
@@ -815,20 +735,10 @@ function initCustomVideoPlayer(modal) {
         }
     });
 
-    // Volume slider (Mouse and Touch)
+    // Volume slider
     volumeBar.addEventListener('click', (e) => {
         const rect = volumeBar.getBoundingClientRect();
         const volume = Math.max(0, Math.min(1, (e.clientX - rect.left) / rect.width));
-        video.volume = volume;
-        video.muted = false;
-        volumeFilled.style.width = `${volume * 100}%`;
-        volumeBtn.innerHTML = volume > 0 ? '<i class="fas fa-volume-up"></i>' : '<i class="fas fa-volume-mute"></i>';
-    });
-
-    volumeBar.addEventListener('touchstart', (e) => {
-        const rect = volumeBar.getBoundingClientRect();
-        const touch = e.touches[0];
-        const volume = Math.max(0, Math.min(1, (touch.clientX - rect.left) / rect.width));
         video.volume = volume;
         video.muted = false;
         volumeFilled.style.width = `${volume * 100}%`;
