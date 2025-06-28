@@ -35,38 +35,59 @@ window.addEventListener('scroll', function() {
     }, 10);
 }, { passive: true });
 
-// Enhanced Mobile Menu Toggle
+// Enhanced Mobile Menu Toggle with improved responsive handling
 const hamburger = document.getElementById('hamburger');
 const navMenu = document.getElementById('nav-menu');
 
-hamburger.addEventListener('click', function() {
-    navMenu.classList.toggle('active');
-    hamburger.classList.toggle('active');
+function closeMobileMenu() {
+    navMenu.classList.remove('active');
+    hamburger.classList.remove('active');
+    document.body.style.overflow = 'auto';
+}
 
-    // Prevent body scroll when menu is open
+function openMobileMenu() {
+    navMenu.classList.add('active');
+    hamburger.classList.add('active');
+    document.body.style.overflow = 'hidden';
+}
+
+hamburger.addEventListener('click', function(e) {
+    e.stopPropagation();
     if (navMenu.classList.contains('active')) {
-        document.body.style.overflow = 'hidden';
+        closeMobileMenu();
     } else {
-        document.body.style.overflow = 'auto';
+        openMobileMenu();
     }
 });
 
 // Close mobile menu when clicking on a link
 document.querySelectorAll('.nav-link').forEach(link => {
     link.addEventListener('click', () => {
-        navMenu.classList.remove('active');
-        hamburger.classList.remove('active');
-        document.body.style.overflow = 'auto';
+        closeMobileMenu();
     });
 });
 
 // Close mobile menu when clicking outside
 document.addEventListener('click', function(e) {
     if (!hamburger.contains(e.target) && !navMenu.contains(e.target)) {
-        navMenu.classList.remove('active');
-        hamburger.classList.remove('active');
-        document.body.style.overflow = 'auto';
+        closeMobileMenu();
     }
+});
+
+// Close mobile menu on window resize if screen becomes large
+window.addEventListener('resize', function() {
+    if (window.innerWidth > 768) {
+        closeMobileMenu();
+    }
+});
+
+// Handle orientation change on mobile devices
+window.addEventListener('orientationchange', function() {
+    setTimeout(() => {
+        if (window.innerWidth > 768) {
+            closeMobileMenu();
+        }
+    }, 100);
 });
 
 // Smooth Scrolling for Navigation Links
@@ -941,3 +962,130 @@ function initCustomVideoPlayer(modal) {
         loadingSpinner.style.display = 'none';
     }, { once: true });
 }
+
+// Initialize floating letters animation
+function initFloatingLetters() {
+    const containers = document.querySelectorAll('.floating-letters');
+    const letters = ['I', 'T', 'Q', 'N'];
+
+    containers.forEach(container => {
+        container.innerHTML = '';
+        letters.forEach((letter, index) => {
+            const span = document.createElement('span');
+            span.className = 'letter';
+            span.textContent = letter;
+            span.style.animationDelay = `${index * 0.2}s`;
+            container.appendChild(span);
+        });
+    });
+}
+
+// Enhanced Responsive Functions
+function handleResponsiveLayout() {
+    const isMobile = window.innerWidth <= 768;
+    const isTablet = window.innerWidth > 768 && window.innerWidth <= 1024;
+
+    // Add device-specific classes
+    document.body.classList.toggle('mobile-device', isMobile);
+    document.body.classList.toggle('tablet-device', isTablet);
+    document.body.classList.toggle('desktop-device', !isMobile && !isTablet);
+
+    // Adjust AOS settings for mobile
+    if (isMobile) {
+        AOS.refresh();
+    }
+}
+
+// Optimize images for different screen sizes
+function optimizeImages() {
+    const images = document.querySelectorAll('img');
+    const devicePixelRatio = window.devicePixelRatio || 1;
+
+    images.forEach(img => {
+        if (img.dataset.src && devicePixelRatio > 1) {
+            // Load high-DPI images for retina displays
+            img.src = img.dataset.src.replace('.jpg', '@2x.jpg');
+        }
+    });
+}
+
+// Handle touch events for better mobile interaction
+function initTouchHandlers() {
+    let touchStartY = 0;
+    let touchEndY = 0;
+
+    document.addEventListener('touchstart', function(e) {
+        touchStartY = e.changedTouches[0].screenY;
+    }, { passive: true });
+
+    document.addEventListener('touchend', function(e) {
+        touchEndY = e.changedTouches[0].screenY;
+        handleSwipe();
+    }, { passive: true });
+
+    function handleSwipe() {
+        const swipeThreshold = 50;
+        const diff = touchStartY - touchEndY;
+
+        if (Math.abs(diff) > swipeThreshold) {
+            if (diff > 0) {
+                // Swipe up - could trigger scroll to next section
+                console.log('Swipe up detected');
+            } else {
+                // Swipe down - could trigger scroll to previous section
+                console.log('Swipe down detected');
+            }
+        }
+    }
+}
+
+// Viewport height fix for mobile browsers
+function setViewportHeight() {
+    const vh = window.innerHeight * 0.01;
+    document.documentElement.style.setProperty('--vh', `${vh}px`);
+}
+
+// Performance optimization for mobile
+function optimizeForMobile() {
+    // Reduce animation complexity on mobile
+    if (window.innerWidth <= 768) {
+        // Disable complex animations on mobile for better performance
+        const complexAnimations = document.querySelectorAll('.floating-shapes');
+        complexAnimations.forEach(element => {
+            element.style.display = 'none';
+        });
+    }
+}
+
+// Initialize responsive features
+function initResponsiveFeatures() {
+    handleResponsiveLayout();
+    optimizeImages();
+    initTouchHandlers();
+    setViewportHeight();
+    optimizeForMobile();
+}
+
+// Event listeners for responsive handling
+window.addEventListener('resize', function() {
+    handleResponsiveLayout();
+    setViewportHeight();
+    optimizeForMobile();
+});
+
+window.addEventListener('orientationchange', function() {
+    setTimeout(() => {
+        setViewportHeight();
+        handleResponsiveLayout();
+        optimizeForMobile();
+    }, 100);
+});
+
+// Initialize everything on page load
+document.addEventListener('DOMContentLoaded', function() {
+    initFloatingLetters();
+    initResponsiveFeatures();
+});
+
+// Initialize floating letters immediately for loading screen
+initFloatingLetters();
