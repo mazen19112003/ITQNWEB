@@ -373,24 +373,73 @@ window.addEventListener('load', function() {
     renderLogoLetters(currentLanguage);
 });
 
-// Portfolio Video Modal
+// Custom Video Player Modal
 function createVideoModal() {
     const modal = document.createElement('div');
     modal.className = 'video-modal';
     modal.innerHTML = `
         <div class="video-modal-content">
-            <span class="video-close">&times;</span>
-            <video controls autoplay>
-                <source src="" type="video/mp4">
-                Your browser does not support the video tag.
-            </video>
+            <div class="video-header">
+                <h3 class="video-title"></h3>
+                <p class="video-subtitle"></p>
+                <span class="video-close">&times;</span>
+            </div>
+            <div class="custom-video-player">
+                <video preload="metadata" muted playsinline>
+                    <source src="" type="video/mp4">
+                    <source src="" type="video/webm">
+                    <source src="" type="video/ogg">
+                    Your browser does not support the video tag.
+                </video>
+                <div class="video-overlay">
+                    <div class="play-pause-btn">
+                        <i class="fas fa-play"></i>
+                    </div>
+                    <div class="video-loading">
+                        <div class="loading-spinner"></div>
+                    </div>
+                </div>
+                <div class="custom-controls">
+                    <div class="progress-container">
+                        <div class="progress-bar">
+                            <div class="progress-filled"></div>
+                            <div class="progress-handle"></div>
+                        </div>
+                        <div class="time-display">
+                            <span class="current-time">0:00</span>
+                            <span class="duration">0:00</span>
+                        </div>
+                    </div>
+                    <div class="control-buttons">
+                        <button class="control-btn play-pause-control">
+                            <i class="fas fa-play"></i>
+                        </button>
+                        <button class="control-btn volume-btn">
+                            <i class="fas fa-volume-up"></i>
+                        </button>
+                        <div class="volume-slider">
+                            <div class="volume-bar">
+                                <div class="volume-filled"></div>
+                            </div>
+                        </div>
+                        <button class="control-btn speed-btn">1x</button>
+                        <button class="control-btn fullscreen-btn">
+                            <i class="fas fa-expand"></i>
+                        </button>
+                    </div>
+                </div>
+            </div>
+            <div class="video-info">
+                <p class="video-description"></p>
+                <div class="video-tech-tags"></div>
+            </div>
         </div>
     `;
     document.body.appendChild(modal);
     return modal;
 }
 
-// Video Modal Functionality
+// Enhanced Video Modal Functionality
 document.addEventListener('DOMContentLoaded', function() {
     let videoModal = null;
 
@@ -399,38 +448,406 @@ document.addEventListener('DOMContentLoaded', function() {
         if (e.target.closest('.video-link') || e.target.closest('.play-btn')) {
             e.preventDefault();
 
-            const videoSrc = e.target.closest('[data-video]')?.getAttribute('data-video');
+            const clickedElement = e.target.closest('[data-video]');
+            const videoSrc = clickedElement?.getAttribute('data-video');
+
             if (videoSrc) {
                 if (!videoModal) {
                     videoModal = createVideoModal();
                 }
 
-                const video = videoModal.querySelector('video source');
-                video.src = `assets/videos/${videoSrc}`;
-                videoModal.querySelector('video').load();
+                // Get project information
+                const portfolioItem = e.target.closest('.portfolio-item');
+                const projectTitle = portfolioItem?.querySelector('h4')?.textContent || 'مشروع';
+                const projectDesc = portfolioItem?.querySelector('.portfolio-overlay p')?.textContent || '';
+                const techTags = portfolioItem?.querySelectorAll('.tech-tag') || [];
+
+                // Update modal content
+                videoModal.querySelector('.video-title').textContent = projectTitle;
+                videoModal.querySelector('.video-subtitle').textContent = 'عرض توضيحي للمشروع';
+                videoModal.querySelector('.video-description').textContent = projectDesc;
+
+                // Update tech tags
+                const techContainer = videoModal.querySelector('.video-tech-tags');
+                techContainer.innerHTML = '';
+                techTags.forEach(tag => {
+                    const techTag = document.createElement('span');
+                    techTag.className = 'video-tech-tag';
+                    techTag.textContent = tag.textContent;
+                    techContainer.appendChild(techTag);
+                });
+
+                // Update video source
+                const video = videoModal.querySelector('video');
+                const sources = video.querySelectorAll('source');
+                const videoBasePath = `assets/videos/${videoSrc.replace(/\.[^/.]+$/, "")}`;
+
+                // Set multiple format sources
+                sources[0].src = `${videoBasePath}.mp4`;
+                sources[1].src = `${videoBasePath}.webm`;
+                sources[2].src = `${videoBasePath}.ogg`;
+
+                video.load();
+
+                console.log('Loading video:', videoBasePath);
+
+                // Initialize custom video player
+                initCustomVideoPlayer(videoModal);
+
+                // Show modal with animation
                 videoModal.style.display = 'flex';
                 document.body.style.overflow = 'hidden';
+
+                // Add entrance animation
+                setTimeout(() => {
+                    videoModal.style.opacity = '1';
+                }, 10);
             }
         }
     });
 
+    // Enhanced close modal functionality
+    function closeVideoModal() {
+        if (videoModal) {
+            // Add exit animation
+            videoModal.style.opacity = '0';
+            videoModal.querySelector('.video-modal-content').style.transform = 'scale(0.9) translateY(20px)';
+
+            setTimeout(() => {
+                videoModal.style.display = 'none';
+                videoModal.querySelector('video').pause();
+                videoModal.querySelector('video').currentTime = 0;
+                document.body.style.overflow = 'auto';
+
+                // Reset transforms
+                videoModal.style.opacity = '';
+                videoModal.querySelector('.video-modal-content').style.transform = '';
+            }, 300);
+        }
+    }
+
     // Close modal functionality
     document.addEventListener('click', function(e) {
         if (e.target.classList.contains('video-close') || e.target.classList.contains('video-modal')) {
-            if (videoModal) {
-                videoModal.style.display = 'none';
-                videoModal.querySelector('video').pause();
-                document.body.style.overflow = 'auto';
-            }
+            closeVideoModal();
         }
     });
 
     // Close modal with Escape key
     document.addEventListener('keydown', function(e) {
         if (e.key === 'Escape' && videoModal && videoModal.style.display === 'flex') {
-            videoModal.style.display = 'none';
-            videoModal.querySelector('video').pause();
-            document.body.style.overflow = 'auto';
+            closeVideoModal();
+        }
+    });
+
+    // Pause video when clicking outside video area
+    document.addEventListener('click', function(e) {
+        if (videoModal && videoModal.style.display === 'flex' &&
+            !e.target.closest('.video-container') &&
+            !e.target.closest('.video-header') &&
+            !e.target.closest('.video-info')) {
+            const video = videoModal.querySelector('video');
+            if (!video.paused) {
+                video.pause();
+            }
         }
     });
 });
+
+// Custom Video Player Functionality
+function initCustomVideoPlayer(modal) {
+    const video = modal.querySelector('video');
+    const playPauseBtn = modal.querySelector('.play-pause-btn');
+    const playPauseControl = modal.querySelector('.play-pause-control');
+    const progressBar = modal.querySelector('.progress-bar');
+    const progressFilled = modal.querySelector('.progress-filled');
+    const progressHandle = modal.querySelector('.progress-handle');
+    const currentTimeSpan = modal.querySelector('.current-time');
+    const durationSpan = modal.querySelector('.duration');
+    const volumeBtn = modal.querySelector('.volume-btn');
+    const volumeBar = modal.querySelector('.volume-bar');
+    const volumeFilled = modal.querySelector('.volume-filled');
+    const speedBtn = modal.querySelector('.speed-btn');
+    const fullscreenBtn = modal.querySelector('.fullscreen-btn');
+    const videoOverlay = modal.querySelector('.video-overlay');
+    const customControls = modal.querySelector('.custom-controls');
+    const loadingSpinner = modal.querySelector('.video-loading');
+
+    let isPlaying = false;
+    let isDragging = false;
+    let currentSpeed = 1;
+    const speeds = [0.5, 0.75, 1, 1.25, 1.5, 2];
+    let speedIndex = 2;
+
+    // Format time function
+    function formatTime(seconds) {
+        const mins = Math.floor(seconds / 60);
+        const secs = Math.floor(seconds % 60);
+        return `${mins}:${secs.toString().padStart(2, '0')}`;
+    }
+
+    // Update progress
+    function updateProgress() {
+        if (!isDragging && video.duration) {
+            const progress = (video.currentTime / video.duration) * 100;
+            progressFilled.style.width = `${progress}%`;
+            progressHandle.style.left = `${progress}%`;
+            currentTimeSpan.textContent = formatTime(video.currentTime);
+        }
+    }
+
+    // Play/Pause functionality
+    function togglePlayPause() {
+        console.log('Toggle play/pause called. Video paused:', video.paused);
+        console.log('Video readyState:', video.readyState);
+        console.log('Video src:', video.currentSrc);
+
+        if (video.paused) {
+            console.log('Attempting to play video...');
+            video.play().then(() => {
+                console.log('Video started playing');
+                playPauseBtn.innerHTML = '<i class="fas fa-pause"></i>';
+                playPauseControl.innerHTML = '<i class="fas fa-pause"></i>';
+                isPlaying = true;
+            }).catch(error => {
+                console.error('Error playing video:', error);
+                alert('خطأ في تشغيل الفيديو: ' + error.message);
+            });
+        } else {
+            console.log('Pausing video...');
+            video.pause();
+            playPauseBtn.innerHTML = '<i class="fas fa-play"></i>';
+            playPauseControl.innerHTML = '<i class="fas fa-play"></i>';
+            isPlaying = false;
+        }
+    }
+
+    // Video event listeners
+    video.addEventListener('loadedmetadata', () => {
+        durationSpan.textContent = formatTime(video.duration);
+        loadingSpinner.style.display = 'none';
+        console.log('Video loaded, duration:', video.duration);
+    });
+
+    video.addEventListener('timeupdate', updateProgress);
+
+    video.addEventListener('waiting', () => {
+        loadingSpinner.style.display = 'flex';
+    });
+
+    video.addEventListener('canplay', () => {
+        loadingSpinner.style.display = 'none';
+    });
+
+    video.addEventListener('play', () => {
+        isPlaying = true;
+        playPauseBtn.innerHTML = '<i class="fas fa-pause"></i>';
+        playPauseControl.innerHTML = '<i class="fas fa-pause"></i>';
+    });
+
+    video.addEventListener('pause', () => {
+        isPlaying = false;
+        playPauseBtn.innerHTML = '<i class="fas fa-play"></i>';
+        playPauseControl.innerHTML = '<i class="fas fa-play"></i>';
+    });
+
+    video.addEventListener('error', (e) => {
+        console.error('Video error:', e);
+        loadingSpinner.style.display = 'none';
+        playPauseBtn.innerHTML = '<i class="fas fa-exclamation-triangle"></i>';
+
+        // Show error message
+        const errorMsg = document.createElement('div');
+        errorMsg.style.cssText = `
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            color: white;
+            text-align: center;
+            background: rgba(0,0,0,0.8);
+            padding: 20px;
+            border-radius: 10px;
+            z-index: 1000;
+        `;
+        errorMsg.innerHTML = `
+            <i class="fas fa-exclamation-triangle" style="font-size: 2rem; color: #ff6b6b; margin-bottom: 10px;"></i>
+            <p>عذراً، لا يمكن تشغيل الفيديو</p>
+            <p style="font-size: 0.9rem; opacity: 0.8;">تأكد من وجود الملف في المسار الصحيح</p>
+        `;
+        modal.querySelector('.custom-video-player').appendChild(errorMsg);
+    });
+
+    // Click events
+    playPauseBtn.addEventListener('click', (e) => {
+        e.stopPropagation();
+        console.log('Play button clicked');
+        togglePlayPause();
+    });
+
+    playPauseControl.addEventListener('click', (e) => {
+        e.stopPropagation();
+        console.log('Control button clicked');
+        togglePlayPause();
+    });
+
+    video.addEventListener('click', (e) => {
+        e.stopPropagation();
+        console.log('Video clicked');
+        togglePlayPause();
+    });
+
+    // Progress bar interaction
+    progressBar.addEventListener('mousedown', (e) => {
+        isDragging = true;
+        updateProgressFromMouse(e);
+    });
+
+    document.addEventListener('mousemove', (e) => {
+        if (isDragging) {
+            updateProgressFromMouse(e);
+        }
+    });
+
+    document.addEventListener('mouseup', () => {
+        isDragging = false;
+    });
+
+    function updateProgressFromMouse(e) {
+        const rect = progressBar.getBoundingClientRect();
+        const progress = Math.max(0, Math.min(1, (e.clientX - rect.left) / rect.width));
+        const newTime = progress * video.duration;
+        video.currentTime = newTime;
+        progressFilled.style.width = `${progress * 100}%`;
+        progressHandle.style.left = `${progress * 100}%`;
+    }
+
+    // Volume control
+    volumeBtn.addEventListener('click', () => {
+        if (video.muted) {
+            video.muted = false;
+            volumeBtn.innerHTML = '<i class="fas fa-volume-up"></i>';
+            volumeFilled.style.width = `${video.volume * 100}%`;
+        } else {
+            video.muted = true;
+            volumeBtn.innerHTML = '<i class="fas fa-volume-mute"></i>';
+            volumeFilled.style.width = '0%';
+        }
+    });
+
+    // Volume slider
+    volumeBar.addEventListener('click', (e) => {
+        const rect = volumeBar.getBoundingClientRect();
+        const volume = Math.max(0, Math.min(1, (e.clientX - rect.left) / rect.width));
+        video.volume = volume;
+        video.muted = false;
+        volumeFilled.style.width = `${volume * 100}%`;
+        volumeBtn.innerHTML = volume > 0 ? '<i class="fas fa-volume-up"></i>' : '<i class="fas fa-volume-mute"></i>';
+    });
+
+    // Speed control
+    speedBtn.addEventListener('click', () => {
+        speedIndex = (speedIndex + 1) % speeds.length;
+        currentSpeed = speeds[speedIndex];
+        video.playbackRate = currentSpeed;
+        speedBtn.textContent = `${currentSpeed}x`;
+    });
+
+    // Fullscreen control
+    fullscreenBtn.addEventListener('click', () => {
+        if (document.fullscreenElement) {
+            document.exitFullscreen();
+            fullscreenBtn.innerHTML = '<i class="fas fa-expand"></i>';
+        } else {
+            modal.requestFullscreen();
+            fullscreenBtn.innerHTML = '<i class="fas fa-compress"></i>';
+        }
+    });
+
+    // Show/hide controls
+    let controlsTimeout;
+
+    function showControls() {
+        customControls.style.opacity = '1';
+        customControls.style.transform = 'translateY(0)';
+        clearTimeout(controlsTimeout);
+        controlsTimeout = setTimeout(hideControls, 3000);
+    }
+
+    function hideControls() {
+        if (!isPlaying) return;
+        customControls.style.opacity = '0';
+        customControls.style.transform = 'translateY(100%)';
+    }
+
+    videoOverlay.addEventListener('mousemove', showControls);
+    customControls.addEventListener('mouseenter', () => {
+        clearTimeout(controlsTimeout);
+    });
+
+    customControls.addEventListener('mouseleave', () => {
+        controlsTimeout = setTimeout(hideControls, 1000);
+    });
+
+    // Initialize volume
+    video.volume = 0.8;
+    volumeFilled.style.width = '80%';
+
+    // Show loading initially
+    loadingSpinner.style.display = 'flex';
+
+    // Try to load video
+    video.load();
+
+    // Keyboard shortcuts
+    document.addEventListener('keydown', (e) => {
+        if (modal.style.display === 'flex') {
+            switch(e.code) {
+                case 'Space':
+                    e.preventDefault();
+                    togglePlayPause();
+                    break;
+                case 'ArrowLeft':
+                    e.preventDefault();
+                    video.currentTime = Math.max(0, video.currentTime - 10);
+                    break;
+                case 'ArrowRight':
+                    e.preventDefault();
+                    video.currentTime = Math.min(video.duration, video.currentTime + 10);
+                    break;
+                case 'ArrowUp':
+                    e.preventDefault();
+                    video.volume = Math.min(1, video.volume + 0.1);
+                    volumeFilled.style.width = `${video.volume * 100}%`;
+                    break;
+                case 'ArrowDown':
+                    e.preventDefault();
+                    video.volume = Math.max(0, video.volume - 0.1);
+                    volumeFilled.style.width = `${video.volume * 100}%`;
+                    break;
+                case 'KeyM':
+                    e.preventDefault();
+                    volumeBtn.click();
+                    break;
+                case 'KeyF':
+                    e.preventDefault();
+                    fullscreenBtn.click();
+                    break;
+            }
+        }
+    });
+
+    // Double click for fullscreen
+    video.addEventListener('dblclick', () => {
+        fullscreenBtn.click();
+    });
+
+    // Show controls initially
+    showControls();
+
+    // Auto-play when ready (if allowed by browser)
+    video.addEventListener('canplaythrough', () => {
+        console.log('Video can play through');
+        loadingSpinner.style.display = 'none';
+    }, { once: true });
+}
